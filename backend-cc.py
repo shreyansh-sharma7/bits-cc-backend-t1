@@ -1,13 +1,19 @@
+#intialize file
 f = open("timetable.log","r")
 lines = f.read()
+
+#define variables
 stats= {"methods":{},"users":{}, "endpoints":{},"statuses":{}}
 unique_users = set()
 timetables_generated=timetable_generate_count= iterative_count=heuristic_count = 0
 
+
 for line in lines.split("\n"):
 
+    #split into words
     parts = line.split(" ")
 
+    #example line: 2025/08/01 08:00:22 [103.144.92.185] POST /courses 200 400.851µs
     if(len(parts) > 3):
         date = parts[0]
         date_time = parts[1]
@@ -17,12 +23,14 @@ for line in lines.split("\n"):
         if(request_type in ["GET", "POST", "router:"]):
             endpoint = parts[4]
 
+            #count the methods
             stats["methods"][request_type] = stats["methods"].get(request_type,0)+1
 
             if(request_type in ["GET", "POST"]):
                 status = parts[5]
                 time = parts[6]
 
+                #add all the times to each each end point each time to a list
                 division_factor=1000
                 if(time[-2:]== "ms"):
                     division_factor=1
@@ -30,7 +38,7 @@ for line in lines.split("\n"):
                 stats["statuses"][status] = stats["statuses"].get(status,0)+1
 
 
-
+            #count the number of users and sort them by year
             elif (request_type == "router:" and len(parts)>5):
                 user = parts[5]
                 year = user[1:5]
@@ -39,15 +47,16 @@ for line in lines.split("\n"):
                     stats["users"][year] = stats["users"].get(year, 0) + 1
                     unique_users.add(user)
         else:
-
+            #Timetable Generation Code
             if("Generation" in line):
-                timetables_generated += int(parts[7])
+                timetables_generated += int(parts[7]) #number of time tables created
                 timetable_generate_count +=1
             elif("Heuristic" in line):
                 heuristic_count+=1
             elif("Iterative" in line):
                 iterative_count+=1
 
+#post processing for the list of all the endpoint times
 for endpoint in stats["endpoints"]:
     endpoint_data = stats["endpoints"][endpoint]
     count = len(endpoint_data)
